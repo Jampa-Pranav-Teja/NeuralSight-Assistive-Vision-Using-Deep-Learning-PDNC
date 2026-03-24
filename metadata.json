@@ -1,5 +1,5 @@
 {
   "name": "NeuralSight",
-  "description": "AI-powered spatial navigator for individuals with visual impairments, providing real-time environment descriptions and hazard detection.",
-  "requestFramePermissions": ["camera"]
+  "description": "AI-powered spatial navigator for individuals with visual impairments, providing real-time environment descriptions, hazard detection, and personalized identity recognition with voice-managed memory.",
+  "requestFramePermissions": ["camera", "microphone", "geolocation"]
 }

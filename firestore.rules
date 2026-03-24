@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: known_people
+    // Document ID: auto-generated
+    // Fields:
+    //   - name: string (required, 1-100 chars)
+    //   - description: string (optional, 0-500 chars)
+    //   - uid: string (required, matches auth.uid)
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // Collection: emergency_contacts
+    // Document ID: user UID
+    // Fields:
+    //   - name: string (required, 1-100 chars)
+    //   - phone: string (required, 5-20 chars)
+    //   - email: string (optional, 0-100 chars)
+    //   - uid: string (required, matches auth.uid)
+    //
+    // ===============================================================
+
+    // Collection: conversation_history
+    // Document ID: auto-generated
+    // Fields:
+    //   - role: string (required, 'user' or 'model')
+    //   - text: string (required, 1-5000 chars)
+    //   - uid: string (required, matches auth.uid)
+    //   - timestamp: timestamp (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidConversationMessage(data) {
+      return data.keys().hasAll(['role', 'text', 'uid', 'timestamp']) &&
+             data.role in ['user', 'model'] &&
+             data.text is string && data.text.size() >= 1 && data.text.size() <= 5000 &&
+             data.uid == request.auth.uid &&
+             data.timestamp is timestamp;
+    }
+
+    function isValidKnownPerson(data) {
+      return data.keys().hasAll(['name', 'uid', 'createdAt']) &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 500)) &&
+             data.uid == request.auth.uid &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidEmergencyContact(data) {
+      return data.keys().hasAll(['name', 'phone', 'uid']) &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+             data.phone is string && data.phone.size() >= 5 && data.phone.size() <= 20 &&
+             (!('email' in data) || (data.email is string && data.email.size() <= 100)) &&
+             (!('telegramToken' in data) || (data.telegramToken is string && data.telegramToken.size() <= 100)) &&
+             (!('telegramChatId' in data) || (data.telegramChatId is string && data.telegramChatId.size() <= 100)) &&
+             data.uid == request.auth.uid;
+    }
+
+    match /known_people/{personId} {
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isAuthenticated() && isValidKnownPerson(request.resource.data);
+      allow update: if isAuthenticated() && 
+                    resource.data.uid == request.auth.uid && 
+                    isValidKnownPerson(request.resource.data) &&
+                    request.resource.data.uid == resource.data.uid;
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+
+    match /emergency_contacts/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && isValidEmergencyContact(request.resource.data);
+      allow update: if isOwner(uid) && isValidEmergencyContact(request.resource.data);
+      allow delete: if isOwner(uid);
+    }
+
+    match /conversation_history/{messageId} {
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isAuthenticated() && isValidConversationMessage(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+  }
+}

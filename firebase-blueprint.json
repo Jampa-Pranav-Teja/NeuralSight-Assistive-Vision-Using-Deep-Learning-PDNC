@@ -1,0 +1,101 @@
+{
+  "entities": {
+    "KnownPerson": {
+      "title": "Known Person",
+      "description": "A person recognized and named by the user.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the person."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief visual description of the person to help with future recognition."
+        },
+        "uid": {
+          "type": "string",
+          "description": "The UID of the user who saved this person."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this person was first named."
+        }
+      },
+      "required": ["name", "uid", "createdAt"]
+    },
+    "EmergencyContact": {
+      "title": "Emergency Contact",
+      "description": "The user's pre-defined emergency contact information.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the contact."
+        },
+        "phone": {
+          "type": "string",
+          "description": "The phone number of the contact."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the contact."
+        },
+        "telegramToken": {
+          "type": "string",
+          "description": "The Telegram Bot Access Token."
+        },
+        "telegramChatId": {
+          "type": "string",
+          "description": "The Telegram Chat ID."
+        },
+        "uid": {
+          "type": "string",
+          "description": "The UID of the user who owns this contact."
+        }
+      },
+      "required": ["name", "phone", "uid"]
+    },
+    "ConversationMessage": {
+      "title": "Conversation Message",
+      "description": "A single message in the user's conversation history with the assistant.",
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": ["user", "model"],
+          "description": "The role of the message sender."
+        },
+        "text": {
+          "type": "string",
+          "description": "The content of the message."
+        },
+        "uid": {
+          "type": "string",
+          "description": "The UID of the user who owns this message."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this message was sent."
+        }
+      },
+      "required": ["role", "text", "uid", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/known_people": {
+      "schema": "KnownPerson",
+      "description": "Collection of people the user has named and saved."
+    },
+    "/emergency_contacts/{uid}": {
+      "schema": "EmergencyContact",
+      "description": "User's emergency contact information, keyed by user UID."
+    },
+    "/conversation_history": {
+      "schema": "ConversationMessage",
+      "description": "User's conversation history with the assistant."
+    }
+  }
+}
